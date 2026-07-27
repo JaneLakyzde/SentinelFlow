@@ -47,6 +47,12 @@ tests/           Automated tests
 This repository currently contains only the initial project structure. Core
 implementation will be added step by step.
 
+## Implementation plan
+
+The detailed MVP scope, architecture, task checklist, evaluation design, and
+acceptance criteria are documented in
+[docs/mvp-implementation-plan.zh-CN.md](docs/mvp-implementation-plan.zh-CN.md).
+
 ## Development environment
 
 The project uses [Pixi](https://pixi.sh/) for reproducible environment and task
