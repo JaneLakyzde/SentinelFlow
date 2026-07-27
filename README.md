@@ -47,6 +47,29 @@ tests/           Automated tests
 This repository currently contains only the initial project structure. Core
 implementation will be added step by step.
 
+## Development environment
+
+The project uses [Pixi](https://pixi.sh/) for reproducible environment and task
+management.
+
+```bash
+# Create or update the local environment from pixi.lock
+pixi install
+
+# Enter the managed shell
+pixi shell
+
+# Run project tasks
+pixi run test
+pixi run lint
+pixi run format
+pixi run check
+```
+
+Add runtime dependencies with `pixi add <package>` and development dependencies
+with `pixi add --feature dev <package>`. Commit both `pixi.toml` and `pixi.lock`
+when dependencies change; `.pixi/` remains local and is ignored.
+
 ## License
 
 Apache License 2.0.

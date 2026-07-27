@@ -11,6 +11,7 @@ venv/
 dist/
 build/
 outputs/
+.pixi/
 
 # Raw logs and model outputs may be large or sensitive.
 datasets/**/*.jsonl

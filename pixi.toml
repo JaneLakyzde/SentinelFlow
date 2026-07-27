@@ -1,0 +1,25 @@
+[workspace]
+name = "sentinelflow"
+version = "0.1.0"
+description = "Explainable, extensible security auditing for event sequences"
+authors = ["JaneLakzde <janelakyzde@gmail.com>"]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64", "win-64"]
+
+[dependencies]
+python = ">=3.11,<3.14"
+
+[feature.dev.dependencies]
+pytest = ">=8,<10"
+ruff = ">=0.12,<1"
+pyyaml = ">=6,<7"
+
+[environments]
+default = { features = ["dev"], solve-group = "default" }
+
+[tasks]
+test = "pytest"
+lint = "ruff check ."
+format = "ruff format ."
+format-check = "ruff format --check ."
+check = { depends-on = ["lint", "format-check", "test"] }
