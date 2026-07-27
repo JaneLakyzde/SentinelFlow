@@ -9,17 +9,35 @@ platforms = ["osx-arm64", "linux-64", "win-64"]
 [dependencies]
 python = ">=3.11,<3.14"
 
+[pypi-dependencies]
+sentinelflow = { path = ".", editable = true }
+
 [feature.dev.dependencies]
 pytest = ">=8,<10"
 ruff = ">=0.12,<1"
 pyyaml = ">=6,<7"
+pyright = ">=1.1,<2"
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.py313.dependencies]
+python = "3.13.*"
 
 [environments]
 default = { features = ["dev"], solve-group = "default" }
+py311 = { features = ["dev", "py311"], solve-group = "py311" }
+py312 = { features = ["dev", "py312"], solve-group = "py312" }
+py313 = { features = ["dev", "py313"], solve-group = "py313" }
 
 [tasks]
+sentinelflow = "python -m sentinelflow"
 test = "pytest"
 lint = "ruff check ."
 format = "ruff format ."
 format-check = "ruff format --check ."
-check = { depends-on = ["lint", "format-check", "test"] }
+typecheck = "pyright"
+check = { depends-on = ["lint", "format-check", "typecheck", "test"] }

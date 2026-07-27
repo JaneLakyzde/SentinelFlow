@@ -1,7 +1,69 @@
-# Datasets
+# 数据集与实验隔离
 
-This directory will contain dataset manifests and generation documentation.
-Raw logs, labels, predictions, and model outputs are ignored by default.
+本目录只保存数据 Manifest、Schema 和生成说明。原始日志、Ground Truth、
+预测、模型响应和实验输出默认不进入 Git。
 
-Development, validation, and blind-test data should remain separate. Ground
-truth must never be exposed to the audit pipeline.
+## 数据分区
+
+MVP-1 至少维护四个互相隔离的数据分区：
+
+| 分区 | 用途 | 是否允许调参 |
+|---|---|---|
+| `development` | 开发特征、检测器和 Skill | 是 |
+| `validation` | 选择阈值和最终配置 | 仅用于选择 |
+| `blind_test` | 一次性正式评测 | 否 |
+| `pure_normal` | 专门评测 FPR 和困难正常样本 | 不用于攻击模式调参 |
+
+拆分优先按完整场景、时间段和 actor 隔离，不能把同一攻击或正常场景的单条
+请求随机分散到不同集合。
+
+## Manifest 最低字段
+
+每个数据分区必须记录：
+
+- 数据集 ID 和版本；
+- 事件文件 SHA-256；
+- Ground Truth 文件 SHA-256；
+- 来源或生成器版本；
+- 生成参数和随机种子；
+- 时间范围、事件数、actor 数和场景数；
+- 标签粒度和类别分布；
+- 拆分策略；
+- 是否含真实数据、合成数据或混合数据；
+- 已知缺失、乱序、脱敏和截断情况。
+
+## Ground Truth 隔离
+
+- `sentinelflow audit` 的参数、配置和进程环境不得包含 Ground Truth 路径；
+- 审计输入中不得出现 `is_anomaly`、攻击名称、类别或场景 ID；
+- Ground Truth 只能由独立的 evaluator 在审计完成后读取；
+- 文件名、目录名和 Manifest 中不得向审计器泄漏标签；
+- 盲测结果不能用于回调阈值、Prompt 或 Skill。
+
+## 泄漏检查
+
+正式实验前检查：
+
+- 完全重复的请求和窗口；
+- 规范化后相同或近似的请求序列；
+- 相同场景模板、参数范围或随机种子跨集合；
+- 正常基线是否使用盲测数据；
+- 请求级标签与窗口级、场景级评测是否错配。
+
+泄漏检查失败时不得报告正式盲测结论。
+
+## 困难正常样本
+
+纯正常集至少覆盖：
+
+- 合法分页；
+- 批处理或同步任务；
+- 流量高峰和定时任务；
+- SDK、网关和幂等重试；
+- 共享 IP、多实例和多设备；
+- 管理员、委托或共享资源访问；
+- 参数跳号和稀疏资源 ID；
+- 日志缺失和乱序。
+
+这些场景用于证明检测器能够区分异常访问模式和相似的正常行为，而不是只在
+简单合成攻击上取得高分。

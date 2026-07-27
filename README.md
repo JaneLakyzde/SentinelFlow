@@ -13,7 +13,8 @@ and parameter anomalies.
 ```text
 Event logs
   -> normalization and context construction
-  -> feature extraction and candidate detection
+  -> normal baselines and deterministic features
+  -> candidate detection
   -> domain skill and LLM analysis
   -> explainable alerts
   -> precision, recall, FPR, and F1 evaluation
@@ -44,14 +45,47 @@ tests/           Automated tests
 
 ## Status
 
-This repository currently contains only the initial project structure. Core
-implementation will be added step by step.
+The current implementation provides:
+
+- a streaming JSONL data entry point with located validation errors;
+- UTC timestamp, HTTP method, and path normalization;
+- immutable API audit events and bounded-memory dataset summaries;
+- deterministic, epoch-aligned, overlapping event windows;
+- nested body-parameter extraction;
+- parameter cardinality, entropy, sequence, timing, response, and stable-context
+  features.
+
+It does not yet produce anomaly candidates, security alerts, or LLM decisions.
+
+```bash
+pixi run sentinelflow inspect --input /path/to/api_requests.jsonl
+```
+
+Input errors fail fast by default and include the source filename and physical
+line number. Use `--skip-invalid` when exploratory inspection should continue
+past malformed rows and report their count.
+
+Profile one nested body parameter without making an anomaly decision:
+
+```bash
+pixi run sentinelflow profile-parameter \
+  --input /path/to/api_requests.jsonl \
+  --parameter body.posid \
+  --window-seconds 60 \
+  --overlap-seconds 10
+```
+
+The command emits one JSON object per non-empty actor/source/path window. Its
+output contains measured evidence only; it intentionally does not label the
+window as benign or malicious.
 
 ## Implementation plan
 
 The detailed MVP scope, architecture, task checklist, evaluation design, and
 acceptance criteria are documented in
 [docs/mvp-implementation-plan.zh-CN.md](docs/mvp-implementation-plan.zh-CN.md).
+The current trust boundaries and component responsibilities are documented in
+[docs/architecture.md](docs/architecture.md).
 
 ## Development environment
 
