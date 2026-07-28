@@ -1,0 +1,40 @@
+{
+  "dataset_id": "ad-scout-api-security-lab",
+  "version": "20260726-seed-20260726",
+  "source": {
+    "generator": "../ad-scout/api_security_lab/abnormal_client.py",
+    "seed": 20260726,
+    "virtual_clients": 12,
+    "event_count": 3000,
+    "event_sha256": "c56bae5f20e9d085d26f79f95cfd31d538ee53edc864b21e327161f689578788",
+    "ground_truth_sha256": "148d13a2005183c6cb759567e87d63be5d0cbc6799a01d13e25b7bcb7b3b435f"
+  },
+  "labels": {
+    "normal": 2646,
+    "parameter_enumeration": 106,
+    "api_abuse": 198,
+    "horizontal_overreach": 11,
+    "sequence_violation": 12,
+    "request_replay": 13,
+    "parameter_anomaly": 14
+  },
+  "development": {
+    "split_strategy": "complete mixed generated run",
+    "parameter_enumeration_episodes": 13,
+    "allows_tuning": true
+  },
+  "pure_normal": {
+    "split_strategy": "all normal-labeled source events plus isolated legitimate pagination fixture",
+    "regular_normal_events": 2646,
+    "legitimate_pagination_events": 8,
+    "event_count": 2654,
+    "event_sha256": "9f6111e65756c9d3b9b3496b9710b738f31f385f874cf51157e4dd010f33c96a",
+    "ground_truth_sha256": "209eadd56460d2af9b4d5aa38406890d0bd3df84e2756bc0929748247979877d",
+    "allows_tuning": false
+  },
+  "known_limitations": [
+    "Synthetic local-lab traffic rather than production traffic",
+    "Pure-normal pagination is supplied by the repository fixture",
+    "No blind-test split is included in this evaluation"
+  ]
+}

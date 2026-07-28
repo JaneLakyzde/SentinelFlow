@@ -226,7 +226,11 @@ def parse_candidate_review(
         raise LLMOutputError("model output must be a JSON object")
     actual_keys = set(payload)
     if actual_keys != _REQUIRED_KEYS:
-        raise LLMOutputError("model output has missing or unknown fields")
+        missing = sorted(_REQUIRED_KEYS - actual_keys)
+        unknown = sorted(actual_keys - _REQUIRED_KEYS)
+        raise LLMOutputError(
+            f"model output fields are invalid; missing={missing}, unknown={unknown}"
+        )
     if payload["candidate_id"] != candidate.candidate_id:
         raise LLMOutputError("candidate_id does not match the reviewed candidate")
 

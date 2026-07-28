@@ -1,5 +1,7 @@
 # SentinelFlow
 
+[简体中文](README.zh-CN.md) | English
+
 SentinelFlow is a planned, extensible framework for explainable security
 auditing of event sequences with deterministic analysis and large language
 models.
@@ -56,10 +58,15 @@ The current implementation provides:
   features;
 - configurable high-recall parameter-enumeration candidates;
 - stable deduplication across overlapping windows;
-- a versioned API Security Skill and provider-independent LLM review contract.
+- a versioned API Security Skill and provider-independent LLM review contract;
+- a DeepSeek OpenAI-compatible adapter with bounded retries and JSON output;
+- a content-addressed local model-response cache;
+- an isolated evaluator for candidate Recall, false-positive rates, and LLM
+  Precision gain.
 
 The LLM review layer requires an injected provider client. No model provider or
-credential is selected by default.
+credential is selected by default. The first concrete adapter supports DeepSeek
+through its OpenAI-compatible Chat Completions endpoint.
 
 ```bash
 pixi run sentinelflow inspect --input /path/to/api_requests.jsonl
@@ -76,7 +83,7 @@ pixi run sentinelflow profile-parameter \
   --input /path/to/api_requests.jsonl \
   --parameter body.posid \
   --window-seconds 60 \
-  --overlap-seconds 10
+  --overlap-seconds 40
 ```
 
 The command emits one JSON object per non-empty actor/source/path window. Its
@@ -99,6 +106,95 @@ in `configs/parameter-enumeration.yaml`. The Skill-constrained LLM reviewer
 validates model JSON, evidence types, and cited request numbers before accepting
 a decision.
 
+Review the detected candidates with DeepSeek:
+
+```bash
+cp .env.example .env
+# Set SENTINELFLOW_LLM_API_KEY in .env, then:
+pixi run sentinelflow review-parameter-enumeration \
+  --input /path/to/api_requests.jsonl \
+  --parameter body.posid \
+  --config configs/parameter-enumeration.yaml \
+  --output outputs/reviews.jsonl
+```
+
+The command loads credentials from `.env`, which is ignored by Git. Process
+environment variables override dotenv values. Each JSONL record contains the
+locally validated decision plus provider model, token usage, latency, schema
+repair attempts, and cache status. Identical requests reuse the
+content-addressed cache under `outputs/cache`; use `--no-cache` only when a
+fresh provider call is intentional.
+
+An optional trusted normal-context JSON object can declare known pagination,
+batch, or retry contracts:
+
+```bash
+pixi run sentinelflow review-parameter-enumeration \
+  --input /path/to/api_requests.jsonl \
+  --parameter body.posid \
+  --normal-context /path/to/normal-context.json \
+  --output outputs/reviews.jsonl
+```
+
+Ground Truth must never be placed in the normal-context file. The reviewer sees
+only deterministic candidates and minimal normalized projections of the cited
+events. One provider or validation failure is written as an error record without
+discarding the remaining candidates.
+
+Evaluate candidates and reviews in a separate process after auditing:
+
+```bash
+pixi run sentinelflow evaluate-parameter-enumeration \
+  --ground-truth /path/to/ground_truth.jsonl \
+  --candidates outputs/candidates.jsonl \
+  --reviews outputs/reviews.jsonl \
+  --output outputs/evaluation-report.json
+```
+
+The evaluator reports candidate- and LLM-level precision, contiguous-episode
+Recall, request-level Recall, normal-event false-positive rate, pagination-event
+false-positive rate, and LLM precision gain. Ground Truth is accepted only by
+this evaluator command, never by detection or review commands.
+
+## Experiment results
+
+The 2026-07-28 development experiment used 3,000 aligned synthetic API events
+from the sibling `ad-scout/api_security_lab` generator: 106
+parameter-enumeration events in 13 contiguous episodes, 2,646 normal events, and
+248 events from five other anomaly categories. The pure-normal partition
+contains the 2,646 normal events plus eight legitimate pagination events.
+
+Increasing the 60-second window overlap from 10 to 40 seconds on the development
+partition raised episode Recall from 84.62% to 100% without producing a
+candidate on the pure-normal partition.
+
+| Measurement | Result |
+|---|---:|
+| Candidate episode Recall | 13/13 (100%) |
+| Candidate target-event Recall | 106/106 (100%) |
+| Candidate-level Precision | 13/13 (100%) |
+| Pure-normal candidates | 0/2,654 |
+| Standard-config pagination event FPR | 0/8 (0%) |
+| DeepSeek review completion | 14/14 (100%) |
+
+The standard configuration suppresses declared pagination parameters before LLM
+review, so its observed LLM Precision gain is zero. A controlled ablation
+disabled only that suppression and admitted one legitimate pagination
+candidate:
+
+| Pagination ablation | Candidate only | Candidate + DeepSeek |
+|---|---:|---:|
+| Episode Recall | 100% | 100% |
+| Precision | 92.86% | 100% |
+| Pagination event FPR | 100% | 0% |
+
+In that ablation, DeepSeek retained all 13 attack candidates as alerts and
+classified the pagination candidate as benign, yielding a **+7.14 percentage
+point Precision gain** without Recall loss. These are development/synthetic
+results, not blind-test claims. See
+[the full Chinese experiment report](docs/experiment-results.zh-CN.md) and the
+[dataset manifest](datasets/ad-scout-20260726.manifest.json).
+
 ## Implementation plan
 
 The detailed MVP scope, architecture, task checklist, evaluation design, and
@@ -106,6 +202,8 @@ acceptance criteria are documented in
 [docs/mvp-implementation-plan.zh-CN.md](docs/mvp-implementation-plan.zh-CN.md).
 The current trust boundaries and component responsibilities are documented in
 [docs/architecture.md](docs/architecture.md).
+The current measured results and limitations are documented in
+[docs/experiment-results.zh-CN.md](docs/experiment-results.zh-CN.md).
 
 ## Development environment
 

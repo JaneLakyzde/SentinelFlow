@@ -34,9 +34,11 @@ def build_review_request(
     }
     context_payload = dict(normal_context or {})
     user_prompt = (
+        f"<trusted_response_schema>{_json(REVIEW_SCHEMA)}</trusted_response_schema>\n"
         f"<trusted_normal_context>{_json(context_payload)}</trusted_normal_context>\n"
         f"<untrusted_data>{_json(untrusted_payload)}</untrusted_data>\n"
-        "Return exactly one JSON object matching the response schema."
+        "Return exactly one JSON object matching the trusted response schema. "
+        "Include every required property, using null or an empty array only where permitted."
     )
     if correction:
         user_prompt += f"\nPrevious output failed local validation: {correction}"

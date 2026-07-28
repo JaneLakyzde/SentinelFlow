@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 
 from sentinelflow.cli import DEFAULT_ENUMERATION_CONFIG, main
+from sentinelflow.llm.client import LLMRequest, LLMResponse, LLMUsage
 
 
 def test_inspect_outputs_summary(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -265,3 +267,102 @@ def test_detect_parameter_enumeration_rejects_missing_config(tmp_path: Path) -> 
         )
 
     assert caught.value.code == 2
+
+
+def test_review_parameter_enumeration_runs_provider_and_hits_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    input_path = Path(__file__).parent / "fixtures/parameter_enumeration/consecutive.jsonl"
+    output_path = tmp_path / "reviews.jsonl"
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "\n".join(
+            [
+                "SENTINELFLOW_LLM_API_KEY=test-key",
+                f"SENTINELFLOW_LLM_CACHE_DIRECTORY={tmp_path / 'cache'}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    instances: list[FakeDeepSeekClient] = []
+
+    class FakeDeepSeekClient:
+        def __init__(self, settings) -> None:
+            self.calls = 0
+            instances.append(self)
+
+        @property
+        def cache_identity(self) -> dict[str, object]:
+            return {"provider": "deepseek", "model": "deepseek-v4-pro"}
+
+        def generate(self, request: LLMRequest) -> LLMResponse:
+            self.calls += 1
+            match = re.search(r'"candidate_id":"([^"]+)"', request.user_prompt)
+            assert match is not None
+            candidate_id = match.group(1)
+            content = json.dumps(
+                {
+                    "candidate_id": candidate_id,
+                    "decision": "alert",
+                    "category": "parameter_enumeration",
+                    "severity": "medium",
+                    "confidence": 0.87,
+                    "sequence_numbers": [1, 2, 3, 4, 5, 6],
+                    "evidence": [
+                        {
+                            "evidence_type": "parameter_cardinality",
+                            "metric": "distinct_value_count",
+                            "actual": 6,
+                            "observation": "Six distinct values.",
+                            "sequence_numbers": [1, 2, 3, 4, 5, 6],
+                        },
+                        {
+                            "evidence_type": "consecutive_sequence",
+                            "metric": "sequence_ratio",
+                            "actual": 1.0,
+                            "observation": "A complete consecutive sequence.",
+                            "sequence_numbers": [1, 2, 3, 4, 5, 6],
+                        },
+                    ],
+                    "explanation": "Independent deterministic signals support probing.",
+                    "benign_alternative": "No trusted pagination contract was supplied.",
+                    "uncertainty_reasons": [],
+                }
+            )
+            return LLMResponse(
+                content=content,
+                provider="deepseek",
+                requested_model="deepseek-v4-pro",
+                response_model="deepseek-v4-pro-test",
+                latency_ms=5,
+                usage=LLMUsage(100, 50, 150),
+            )
+
+    monkeypatch.setattr("sentinelflow.cli.DeepSeekClient", FakeDeepSeekClient)
+    arguments = [
+        "review-parameter-enumeration",
+        "--input",
+        str(input_path),
+        "--parameter",
+        "body.posid",
+        "--env-file",
+        str(env_path),
+        "--output",
+        str(output_path),
+    ]
+
+    assert main(arguments) == 0
+    first_record = json.loads(output_path.read_text(encoding="utf-8"))
+    assert first_record["status"] == "reviewed"
+    assert first_record["review"]["decision"] == "alert"
+    assert first_record["llm_attempts"][0]["cached"] is False
+    assert instances[0].calls == 1
+    assert "cache_hits=0" in capsys.readouterr().err
+
+    assert main(arguments) == 0
+    second_record = json.loads(output_path.read_text(encoding="utf-8"))
+    assert second_record["llm_attempts"][0]["cached"] is True
+    assert instances[1].calls == 0
+    assert "cache_hits=1" in capsys.readouterr().err

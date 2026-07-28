@@ -11,7 +11,7 @@ from sentinelflow.core.jsonl import JsonlEventReader
 from sentinelflow.core.models import EvidenceType
 from sentinelflow.detectors.config import load_parameter_enumeration_config
 from sentinelflow.detectors.pipeline import parameter_enumeration_candidates
-from sentinelflow.llm.client import LLMRequest
+from sentinelflow.llm.client import LLMRequest, LLMResponse, LLMUsage
 from sentinelflow.llm.review import review_candidate
 from sentinelflow.llm.schemas import (
     CandidateReview,
@@ -32,9 +32,20 @@ class SequenceClient:
         self.outputs = outputs
         self.requests: list[LLMRequest] = []
 
-    def generate(self, request: LLMRequest) -> str:
+    @property
+    def cache_identity(self) -> dict[str, object]:
+        return {"provider": "test", "model": "sequence"}
+
+    def generate(self, request: LLMRequest) -> LLMResponse:
         self.requests.append(request)
-        return self.outputs.pop(0)
+        return LLMResponse(
+            content=self.outputs.pop(0),
+            provider="test",
+            requested_model="sequence",
+            response_model="sequence",
+            latency_ms=1,
+            usage=LLMUsage(),
+        )
 
 
 def fixture_candidate():

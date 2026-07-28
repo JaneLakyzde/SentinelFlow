@@ -1,4 +1,4 @@
-version: "1.1"
+version: "1.1-llm-ablation"
 baseline_version: null
 
 window:
@@ -25,4 +25,5 @@ benign_patterns:
     - page_no
     - offset
     - cursor
-  suppress_pagination_parameters: true
+  # Evaluation ablation: retain pagination-like candidates for LLM review.
+  suppress_pagination_parameters: false
