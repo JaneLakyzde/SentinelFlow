@@ -1,0 +1,8 @@
+{"timestamp":"2026-07-01T12:03:00Z","request_id":"req-p-1","actor":"client-a","source_ip":"10.0.0.1","method":"GET","path":"/api/catalog","body":{"page":1,"page_size":20,"sort":"created_at"},"http_status":200}
+{"timestamp":"2026-07-01T12:03:01Z","request_id":"req-p-2","actor":"client-a","source_ip":"10.0.0.1","method":"GET","path":"/api/catalog","body":{"page":2,"page_size":20,"sort":"created_at"},"http_status":200}
+{"timestamp":"2026-07-01T12:03:02Z","request_id":"req-p-3","actor":"client-a","source_ip":"10.0.0.1","method":"GET","path":"/api/catalog","body":{"page":3,"page_size":20,"sort":"created_at"},"http_status":200}
+{"timestamp":"2026-07-01T12:03:03Z","request_id":"req-p-4","actor":"client-a","source_ip":"10.0.0.1","method":"GET","path":"/api/catalog","body":{"page":4,"page_size":20,"sort":"created_at"},"http_status":200}
+{"timestamp":"2026-07-01T12:03:04Z","request_id":"req-p-5","actor":"client-a","source_ip":"10.0.0.1","method":"GET","path":"/api/catalog","body":{"page":5,"page_size":20,"sort":"created_at"},"http_status":200}
+{"timestamp":"2026-07-01T12:03:05Z","request_id":"req-p-6","actor":"client-a","source_ip":"10.0.0.1","method":"GET","path":"/api/catalog","body":{"page":6,"page_size":20,"sort":"created_at"},"http_status":200}
+{"timestamp":"2026-07-01T12:03:06Z","request_id":"req-p-7","actor":"client-a","source_ip":"10.0.0.1","method":"GET","path":"/api/catalog","body":{"page":7,"page_size":20,"sort":"created_at"},"http_status":200}
+{"timestamp":"2026-07-01T12:03:07Z","request_id":"req-p-8","actor":"client-a","source_ip":"10.0.0.1","method":"GET","path":"/api/catalog","body":{"page":8,"page_size":20,"sort":"created_at"},"http_status":200}

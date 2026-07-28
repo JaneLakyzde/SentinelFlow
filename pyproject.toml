@@ -12,6 +12,9 @@ authors = [
     { name = "JaneLakzde", email = "janelakyzde@gmail.com" },
 ]
 requires-python = ">=3.11,<3.14"
+dependencies = [
+    "pyyaml>=6,<7",
+]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
@@ -26,12 +29,17 @@ classifiers = [
 dev = [
     "pytest>=8,<10",
     "ruff>=0.12,<1",
-    "pyyaml>=6,<7",
     "pyright>=1.1,<2",
 ]
 
 [project.scripts]
 sentinelflow = "sentinelflow.cli:main"
+
+[tool.hatch.build.targets.wheel.force-include]
+"configs/parameter-enumeration.yaml" = "sentinelflow/resources/configs/parameter-enumeration.yaml"
+"domains/api_security/skills/audit-api-security/SKILL.md" = "sentinelflow/resources/skills/audit-api-security/SKILL.md"
+"domains/api_security/skills/audit-api-security/VERSION" = "sentinelflow/resources/skills/audit-api-security/VERSION"
+"domains/api_security/skills/audit-api-security/references/parameter-enumeration.md" = "sentinelflow/resources/skills/audit-api-security/references/parameter-enumeration.md"
 
 [tool.ruff]
 target-version = "py311"

@@ -53,9 +53,13 @@ The current implementation provides:
 - deterministic, epoch-aligned, overlapping event windows;
 - nested body-parameter extraction;
 - parameter cardinality, entropy, sequence, timing, response, and stable-context
-  features.
+  features;
+- configurable high-recall parameter-enumeration candidates;
+- stable deduplication across overlapping windows;
+- a versioned API Security Skill and provider-independent LLM review contract.
 
-It does not yet produce anomaly candidates, security alerts, or LLM decisions.
+The LLM review layer requires an injected provider client. No model provider or
+credential is selected by default.
 
 ```bash
 pixi run sentinelflow inspect --input /path/to/api_requests.jsonl
@@ -78,6 +82,22 @@ pixi run sentinelflow profile-parameter \
 The command emits one JSON object per non-empty actor/source/path window. Its
 output contains measured evidence only; it intentionally does not label the
 window as benign or malicious.
+
+Generate the deterministic candidate baseline:
+
+```bash
+pixi run sentinelflow detect-parameter-enumeration \
+  --input /path/to/api_requests.jsonl \
+  --parameter body.posid \
+  --config configs/parameter-enumeration.yaml \
+  --output candidates.jsonl
+```
+
+`candidates.jsonl` contains high-recall intermediate candidates, not security
+alerts. Thresholds, pagination exclusions, and response statuses are versioned
+in `configs/parameter-enumeration.yaml`. The Skill-constrained LLM reviewer
+validates model JSON, evidence types, and cited request numbers before accepting
+a decision.
 
 ## Implementation plan
 

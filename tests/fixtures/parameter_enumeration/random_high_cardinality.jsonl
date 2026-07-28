@@ -1,0 +1,8 @@
+{"timestamp":"2026-07-01T12:02:00Z","request_id":"req-r-1","actor":"client-b","source_ip":"10.0.0.2","method":"GET","path":"/api/resources","body":{"resource_id":901,"tenant":"tenant-b"},"http_status":404}
+{"timestamp":"2026-07-01T12:02:01Z","request_id":"req-r-2","actor":"client-b","source_ip":"10.0.0.2","method":"GET","path":"/api/resources","body":{"resource_id":17,"tenant":"tenant-b"},"http_status":200}
+{"timestamp":"2026-07-01T12:02:02Z","request_id":"req-r-3","actor":"client-b","source_ip":"10.0.0.2","method":"GET","path":"/api/resources","body":{"resource_id":642,"tenant":"tenant-b"},"http_status":404}
+{"timestamp":"2026-07-01T12:02:03Z","request_id":"req-r-4","actor":"client-b","source_ip":"10.0.0.2","method":"GET","path":"/api/resources","body":{"resource_id":88,"tenant":"tenant-b"},"http_status":404}
+{"timestamp":"2026-07-01T12:02:04Z","request_id":"req-r-5","actor":"client-b","source_ip":"10.0.0.2","method":"GET","path":"/api/resources","body":{"resource_id":1200,"tenant":"tenant-b"},"http_status":404}
+{"timestamp":"2026-07-01T12:02:05Z","request_id":"req-r-6","actor":"client-b","source_ip":"10.0.0.2","method":"GET","path":"/api/resources","body":{"resource_id":333,"tenant":"tenant-b"},"http_status":200}
+{"timestamp":"2026-07-01T12:02:06Z","request_id":"req-r-7","actor":"client-b","source_ip":"10.0.0.2","method":"GET","path":"/api/resources","body":{"resource_id":5,"tenant":"tenant-b"},"http_status":404}
+{"timestamp":"2026-07-01T12:02:07Z","request_id":"req-r-8","actor":"client-b","source_ip":"10.0.0.2","method":"GET","path":"/api/resources","body":{"resource_id":777,"tenant":"tenant-b"},"http_status":404}

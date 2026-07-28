@@ -1,0 +1,28 @@
+version: "1.0"
+baseline_version: null
+
+window:
+  duration_seconds: 60
+  overlap_seconds: 10
+
+thresholds:
+  minimum_distinct_values: 5
+  minimum_numeric_values: 5
+  minimum_sequence_ratio: 0.6
+  minimum_fixed_step_ratio: 0.6
+  minimum_random_distinct_values: 8
+  maximum_random_sequence_ratio: 0.4
+  minimum_failure_ratio: 0.5
+  minimum_stable_context_ratio: 0.8
+
+responses:
+  failure_statuses: [400, 401, 403, 404, 410]
+
+benign_patterns:
+  pagination_parameter_names:
+    - page
+    - page_number
+    - page_no
+    - offset
+    - cursor
+  suppress_pagination_parameters: true

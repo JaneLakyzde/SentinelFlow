@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from sentinelflow.cli import main
+from sentinelflow.cli import DEFAULT_ENUMERATION_CONFIG, main
 
 
 def test_inspect_outputs_summary(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -156,3 +156,112 @@ def test_profile_parameter_reports_skipped_rows(
     captured = capsys.readouterr()
     assert json.loads(captured.out)["observed_value_count"] == 1
     assert captured.err == "warning: skipped invalid rows: 1\n"
+
+
+def test_detect_parameter_enumeration_writes_deduplicated_candidates(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "events.jsonl"
+    output_path = tmp_path / "candidates.jsonl"
+    rows = [
+        {
+            "timestamp": f"2026-07-01T12:00:0{index}Z",
+            "request_id": f"req-{index}",
+            "actor": "client-a",
+            "source_ip": "10.0.0.1",
+            "method": "GET",
+            "path": "/items",
+            "body": {"posid": 100 + index, "tenant": "tenant-a"},
+            "http_status": 404 if index > 2 else 200,
+        }
+        for index in range(8)
+    ]
+    input_path.write_text(
+        "".join(f"{json.dumps(row)}\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "detect-parameter-enumeration",
+                "--input",
+                str(input_path),
+                "--parameter",
+                "body.posid",
+                "--config",
+                str(DEFAULT_ENUMERATION_CONFIG),
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    lines = output_path.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1
+    payload = json.loads(lines[0])
+    assert payload["suggested_category"] == "parameter_enumeration"
+    assert payload["sequence_numbers"] == list(range(1, 9))
+    assert len(payload["source_window_ids"]) >= 1
+    assert payload["evidence"]
+
+
+def test_detect_parameter_enumeration_creates_empty_output_for_pagination(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "events.jsonl"
+    output_path = tmp_path / "candidates.jsonl"
+    rows = [
+        {
+            "timestamp": f"2026-07-01T12:00:0{index}Z",
+            "request_id": f"req-{index}",
+            "actor": "client-a",
+            "source_ip": "10.0.0.1",
+            "method": "GET",
+            "path": "/items",
+            "body": {"page": index + 1, "page_size": 20},
+            "http_status": 200,
+        }
+        for index in range(8)
+    ]
+    input_path.write_text(
+        "".join(f"{json.dumps(row)}\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "detect-parameter-enumeration",
+                "--input",
+                str(input_path),
+                "--parameter",
+                "body.page",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+    assert output_path.read_text(encoding="utf-8") == ""
+
+
+def test_detect_parameter_enumeration_rejects_missing_config(tmp_path: Path) -> None:
+    input_path = tmp_path / "events.jsonl"
+    input_path.write_text("", encoding="utf-8")
+
+    with pytest.raises(SystemExit) as caught:
+        main(
+            [
+                "detect-parameter-enumeration",
+                "--input",
+                str(input_path),
+                "--parameter",
+                "body.posid",
+                "--config",
+                str(tmp_path / "missing.yaml"),
+            ]
+        )
+
+    assert caught.value.code == 2

@@ -2432,8 +2432,8 @@ packages:
 - pypi: ./
   name: sentinelflow
   requires_dist:
+  - pyyaml>=6,<7
   - pytest>=8,<10 ; extra == 'dev'
   - ruff>=0.12,<1 ; extra == 'dev'
-  - pyyaml>=6,<7 ; extra == 'dev'
   - pyright>=1.1,<2 ; extra == 'dev'
   requires_python: '>=3.11,<3.14'

@@ -1,0 +1,6 @@
+{"timestamp":"2026-07-01T12:00:00Z","request_id":"req-c-1","actor":"client-a","source_ip":"10.0.0.1","method":"POST","path":"/gdt_mview.fcg","body":{"posid":3043688354889804,"sid":"sid-a"},"http_status":404}
+{"timestamp":"2026-07-01T12:00:01Z","request_id":"req-c-2","actor":"client-a","source_ip":"10.0.0.1","method":"POST","path":"/gdt_mview.fcg","body":{"posid":3043688354889805,"sid":"sid-a"},"http_status":404}
+{"timestamp":"2026-07-01T12:00:02Z","request_id":"req-c-3","actor":"client-a","source_ip":"10.0.0.1","method":"POST","path":"/gdt_mview.fcg","body":{"posid":3043688354889806,"sid":"sid-a"},"http_status":200}
+{"timestamp":"2026-07-01T12:00:03Z","request_id":"req-c-4","actor":"client-a","source_ip":"10.0.0.1","method":"POST","path":"/gdt_mview.fcg","body":{"posid":3043688354889807,"sid":"sid-a"},"http_status":404}
+{"timestamp":"2026-07-01T12:00:04Z","request_id":"req-c-5","actor":"client-a","source_ip":"10.0.0.1","method":"POST","path":"/gdt_mview.fcg","body":{"posid":3043688354889808,"sid":"sid-a"},"http_status":200}
+{"timestamp":"2026-07-01T12:00:05Z","request_id":"req-c-6","actor":"client-a","source_ip":"10.0.0.1","method":"POST","path":"/gdt_mview.fcg","body":{"posid":3043688354889809,"sid":"sid-a"},"http_status":404}
