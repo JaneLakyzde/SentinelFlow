@@ -189,6 +189,7 @@ def _integer(value: object, location: str) -> int:
 
 
 def _number(value: object, location: str) -> float:
+    # bool is an int subclass, so reject it before accepting numeric union members.
     if isinstance(value, bool) or not isinstance(value, int | float):
         raise ValueError(f"{location} must be a number")
     return float(value)

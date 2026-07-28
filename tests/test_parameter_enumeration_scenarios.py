@@ -70,3 +70,22 @@ def test_candidate_writer_preserves_existing_output_on_failure(tmp_path: Path) -
 
     assert output.read_text(encoding="utf-8") == "existing\n"
     assert list(tmp_path.glob(".candidates.jsonl.*.tmp")) == []
+
+
+def test_candidate_writer_cleanup_does_not_mask_original_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output = tmp_path / "candidates.jsonl"
+
+    def failing_candidates():
+        raise RuntimeError("injected write failure")
+        yield
+
+    def failing_unlink(self: Path, *, missing_ok: bool = False) -> None:
+        raise PermissionError("injected cleanup failure")
+
+    monkeypatch.setattr(Path, "unlink", failing_unlink)
+
+    with pytest.raises(RuntimeError, match="injected write failure"):
+        write_candidates_jsonl(failing_candidates(), output)

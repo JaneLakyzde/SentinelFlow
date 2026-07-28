@@ -35,6 +35,23 @@ class ReviewEvidence:
     observation: str
     sequence_numbers: tuple[int, ...]
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.evidence_type, EvidenceType):
+            raise ValueError("review evidence_type must be an EvidenceType")
+        if not isinstance(self.metric, str) or not self.metric.strip():
+            raise ValueError("review evidence metric must be a non-empty string")
+        if not isinstance(self.actual, int | float | str | bool):
+            raise ValueError("review evidence actual must be a scalar")
+        if not isinstance(self.observation, str) or not self.observation.strip():
+            raise ValueError("review evidence observation must be a non-empty string")
+        if not self.sequence_numbers or any(
+            isinstance(number, bool) or not isinstance(number, int) or number <= 0
+            for number in self.sequence_numbers
+        ):
+            raise ValueError("review evidence must reference positive sequence numbers")
+        if tuple(sorted(set(self.sequence_numbers))) != self.sequence_numbers:
+            raise ValueError("review evidence sequence_numbers must be sorted and unique")
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "evidence_type": self.evidence_type.value,
@@ -58,6 +75,49 @@ class CandidateReview:
     benign_alternative: str
     uncertainty_reasons: tuple[str, ...]
     skill_version: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.candidate_id, str) or not self.candidate_id:
+            raise ValueError("candidate_id must be a non-empty string")
+        if not isinstance(self.decision, ReviewDecision):
+            raise ValueError("decision must be a ReviewDecision")
+        if self.category is not None and not isinstance(self.category, str):
+            raise ValueError("category must be a string or null")
+        if self.severity is not None and not isinstance(self.severity, Severity):
+            raise ValueError("severity must be a Severity or null")
+        if isinstance(self.confidence, bool) or not isinstance(self.confidence, int | float):
+            raise ValueError("confidence must be a number")
+        if not 0 <= self.confidence <= 1:
+            raise ValueError("confidence must be between 0 and 1")
+        if any(
+            isinstance(number, bool) or not isinstance(number, int) or number <= 0
+            for number in self.sequence_numbers
+        ):
+            raise ValueError("sequence_numbers must contain positive integers")
+        if tuple(sorted(set(self.sequence_numbers))) != self.sequence_numbers:
+            raise ValueError("sequence_numbers must be sorted and unique")
+        if any(not isinstance(item, ReviewEvidence) for item in self.evidence):
+            raise ValueError("evidence must contain ReviewEvidence values")
+        if not isinstance(self.explanation, str) or not self.explanation.strip():
+            raise ValueError("explanation must be a non-empty string")
+        if not isinstance(self.benign_alternative, str) or not self.benign_alternative.strip():
+            raise ValueError("benign_alternative must be a non-empty string")
+        if any(
+            not isinstance(reason, str) or not reason.strip() for reason in self.uncertainty_reasons
+        ):
+            raise ValueError("uncertainty_reasons must contain non-empty strings")
+        if not isinstance(self.skill_version, str) or not self.skill_version:
+            raise ValueError("skill_version must be a non-empty string")
+
+        if self.decision is ReviewDecision.ALERT:
+            if self.category != "parameter_enumeration":
+                raise ValueError("alert category must be parameter_enumeration")
+            if self.severity is None or not self.sequence_numbers or not self.evidence:
+                raise ValueError("alert requires severity, sequence numbers, and evidence")
+        elif self.category is not None or self.severity is not None:
+            raise ValueError("non-alert decisions require null category and severity")
+        if self.decision is ReviewDecision.ABSTAIN and not self.uncertainty_reasons:
+            raise ValueError("abstain requires uncertainty_reasons")
 
     def to_dict(self) -> dict[str, Any]:
         return {

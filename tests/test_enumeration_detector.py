@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
+
 from sentinelflow.core.models import EventWindow, EvidenceType
 from sentinelflow.core.normalization import normalize_event
 from sentinelflow.detectors.config import load_parameter_enumeration_config
@@ -128,3 +130,19 @@ def test_mixed_non_adjacent_numeric_values_do_not_crash() -> None:
     features = parameter_window_features(mixed_window, parameter_path="body.posid")
 
     assert detect_parameter_enumeration(mixed_window, features, config=CONFIG) is None
+
+
+def test_rejects_features_longer_than_configured_window() -> None:
+    event_window = window([100, 101, 102, 103, 104])
+    features = parameter_window_features(event_window, parameter_path="body.posid")
+    invalid_features = features.__class__(
+        **{
+            field: getattr(features, field)
+            for field in features.__dataclass_fields__
+            if field != "duration_seconds"
+        },
+        duration_seconds=CONFIG.duration_seconds + 1,
+    )
+
+    with pytest.raises(ValueError, match="duration"):
+        detect_parameter_enumeration(event_window, invalid_features, config=CONFIG)

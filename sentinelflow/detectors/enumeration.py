@@ -6,6 +6,7 @@ import hashlib
 from collections.abc import Iterable
 
 from sentinelflow.core.models import (
+    AuditEvent,
     Candidate,
     CandidateEvidence,
     EventWindow,
@@ -31,6 +32,8 @@ def detect_parameter_enumeration(
     """Return one high-recall candidate for a qualifying window."""
     if features.window_id != window.window_id:
         raise ValueError("features and window must have the same window_id")
+    if features.duration_seconds > config.duration_seconds:
+        raise ValueError("feature duration exceeds the configured window duration")
     if features.distinct_value_count < config.minimum_distinct_values:
         return None
 
@@ -221,7 +224,7 @@ def _evidence(
 def _events_for_sequences(
     window: EventWindow,
     sequence_numbers: tuple[int, ...],
-):
+) -> tuple[AuditEvent, AuditEvent]:
     selected = [event for event in window.events if event.sequence_no in sequence_numbers]
     if not selected:
         raise ValueError("features must reference events in the window")

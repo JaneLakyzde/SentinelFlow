@@ -8,11 +8,18 @@ from pathlib import Path
 import pytest
 
 from sentinelflow.core.jsonl import JsonlEventReader
+from sentinelflow.core.models import EvidenceType
 from sentinelflow.detectors.config import load_parameter_enumeration_config
 from sentinelflow.detectors.pipeline import parameter_enumeration_candidates
 from sentinelflow.llm.client import LLMRequest
 from sentinelflow.llm.review import review_candidate
-from sentinelflow.llm.schemas import LLMOutputError, ReviewDecision
+from sentinelflow.llm.schemas import (
+    CandidateReview,
+    LLMOutputError,
+    ReviewDecision,
+    ReviewEvidence,
+    Severity,
+)
 from sentinelflow.llm.skill import default_skill_path, load_skill_bundle
 
 ROOT = Path(__file__).parents[1]
@@ -68,6 +75,53 @@ def valid_alert(candidate_id: str) -> str:
             "uncertainty_reasons": [],
         }
     )
+
+
+def review_evidence() -> ReviewEvidence:
+    return ReviewEvidence(
+        evidence_type=EvidenceType.PARAMETER_CARDINALITY,
+        metric="distinct_value_count",
+        actual=6,
+        observation="Six distinct values met the configured threshold.",
+        sequence_numbers=(1, 2),
+    )
+
+
+def candidate_review(**changes: object) -> CandidateReview:
+    values = {
+        "candidate_id": "candidate-abc123",
+        "decision": ReviewDecision.ALERT,
+        "category": "parameter_enumeration",
+        "severity": Severity.MEDIUM,
+        "confidence": 0.87,
+        "sequence_numbers": (1, 2),
+        "evidence": (review_evidence(),),
+        "explanation": "Multiple deterministic signals support systematic probing.",
+        "benign_alternative": "No pagination contract was supplied.",
+        "uncertainty_reasons": (),
+        "skill_version": "0.1.0",
+    }
+    values.update(changes)
+    return CandidateReview(**values)  # type: ignore[arg-type]
+
+
+def test_review_dataclasses_validate_direct_construction() -> None:
+    with pytest.raises(ValueError, match="confidence"):
+        candidate_review(confidence=True)
+
+    with pytest.raises(ValueError, match="sorted"):
+        ReviewEvidence(
+            evidence_type=EvidenceType.PARAMETER_CARDINALITY,
+            metric="distinct_value_count",
+            actual=6,
+            observation="Observed values.",
+            sequence_numbers=(2, 1),
+        )
+
+
+def test_candidate_review_enforces_decision_contract() -> None:
+    with pytest.raises(ValueError, match="non-alert"):
+        candidate_review(decision=ReviewDecision.BENIGN)
 
 
 def test_skill_bundle_loads_versioned_reference() -> None:

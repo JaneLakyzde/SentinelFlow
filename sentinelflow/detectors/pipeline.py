@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 from collections.abc import Iterable
+from contextlib import suppress
 from datetime import timedelta
 from pathlib import Path
 
@@ -64,7 +65,8 @@ def write_candidates_jsonl(candidates: Iterable[Candidate], output: Path | str) 
                 stream.write(f"{payload}\n")
         assert temporary_path is not None
         temporary_path.replace(output_path)
-    except BaseException:
+    finally:
         if temporary_path is not None:
-            temporary_path.unlink(missing_ok=True)
-        raise
+            # Cleanup must not replace a write, iteration, or interruption error.
+            with suppress(OSError):
+                temporary_path.unlink(missing_ok=True)
